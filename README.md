@@ -1,65 +1,112 @@
-# Automated PR Agent Team
+# PR Agent Team
 
-A team of specialized AI agents that create focused, evidence-backed pull requests. Each agent owns a distinct concern and hands off cross-cutting findings to the appropriate specialist.
+Run the eight specialists from [Jules-PR-team](https://github.com/Sifr-r/Jules-PR-team) as one coordinated Codex team against an existing pull request.
 
-| Agent | File | Role | Can create PRs |
-|---|---|---|---:|
-| Palette | `agents/Palette.txt` | Accessibility and small interaction improvements | Yes |
-| Sentinel | `agents/Sentinel.txt` | Concrete security improvements | Yes |
-| Bolt | `agents/Bolt.txt` | Measured performance improvements | Yes |
-| Scalpel | `agents/scalpel.md` | Verified correctness and reliability fixes | Yes |
-| Harness | `agents/harness.md` | Regression tests and deterministic test reliability | Yes |
-| Mason | `agents/mason.md` | Test-backed, behavior-preserving maintainability refactors | Yes |
-| Scribe | `agents/scribe.md` | Source-backed technical documentation and handover | Yes, on demand |
-| Gatekeeper | `agents/gatekeeper.md` | PR readiness review | No |
-
-## Quick Start
-
-The agent prompts are **pre-migrated, fully self-contained, and optimized for all agentic harnesses** (Google Jules, Claude Code, Codex, Devin, and custom runners). Each worker runs independently with isolated journals to prevent parallel-run conflicts.
-
-1. Copy this repository into your target project (or reference it as a submodule).
-2. Load agent prompt files from `agents/` into your agent runner's system prompt configuration.
-3. Place `GOVERNANCE.md` at your repository root so agents can read the shared contract.
-4. Configure the runner to provide each agent with the repository's actual commands, current diff, and local conventions.
-5. Ensure the runner preserves user-owned changes and grants Gatekeeper read-only review authority.
-
-### Google Jules
-
-In Jules, each agent runs as an independent worker session. Assign one agent prompt per task. The worker-scoped journal naming (`_<worker_id>` / `_<branch_name>`) prevents file collisions when multiple Jules workers execute in parallel.
-
-### Claude Code / Codex / Other Harnesses
-
-Each `.txt` or `.md` file in `agents/` is a complete, standalone system prompt. The Bolt, Palette, and Sentinel prompts include the full governance contract appended at the end, so they work without needing a separate governance injection step.
-
-For Harness, Scalpel, Mason, Scribe, and Gatekeeper, prepend or inject `GOVERNANCE.md` into the system prompt, or instruct the agent to read it from the repository root (already referenced in each prompt).
-
-## Operating Model
-
-Run one PR-creating specialist for a verified target. Mason requires a relevant behavior check before it refactors; Scribe runs only for a source-backed documentation need. Use Gatekeeper after the specialist reports its evidence.
-
-The team is deliberately **not** a pool of agents that generates daily activity: when no agent has a bounded, evidence-backed improvement, it produces no PR.
-
-See `GOVERNANCE.md` for the full ownership and handoff contract.
-
-## Repository Structure
-
-```
-├── AGENTS.md              # Jules/harness configuration file
-├── GOVERNANCE.md           # Shared operating rules, ownership map, and PR format
-├── MIGRATION.md            # Historical: migration steps (already applied)
-├── README.md               # This file
-├── .gitignore              # Ignores .jules/ journals
-└── agents/
-    ├── Bolt.txt            # ⚡ Performance agent (self-contained + governance)
-    ├── Palette.txt         # 🎨 UX/a11y agent (self-contained + governance)
-    ├── Sentinel.txt        # 🛡️ Security agent (self-contained + governance)
-    ├── scalpel.md          # 🔪 Correctness agent
-    ├── harness.md          # 🧪 Test coverage agent
-    ├── mason.md            # 🧱 Maintainability agent
-    ├── scribe.md           # 📝 Documentation agent
-    └── gatekeeper.md       # 🚧 PR review agent (read-only)
+```powershell
+python pr_team.py https://github.com/OWNER/REPO/pull/123 --repo "C:\path\to\checkout"
 ```
 
-## License
+The team reviews the PR, repairs verified issues in the local checkout, runs the project's relevant checks, and gives a Gatekeeper readiness verdict. Changes stay local for you to review and publish.
 
-MIT
+## Choose the scope
+
+| Mode | Use it for | Coverage and cost |
+| --- | --- | --- |
+| `surgical` | One specific issue named with `--focus` | Only the target's relevant specialist, regression work when useful, and Gatekeeper; smallest sufficient repair. |
+| `exhaustive` | The most thorough review of the PR and affected code paths | Every relevant specialist, changed-file coverage, and a second independent review pass; highest expected token use. |
+| `high-priority` (default) | Urgent and major problems | Repair verified P0/P1 findings; report and defer lower-priority issues. |
+
+```powershell
+python pr_team.py https://github.com/OWNER/REPO/pull/123 --repo "C:\path\to\checkout" --mode surgical --focus "Fix the duplicate payment on retry"
+python pr_team.py https://github.com/OWNER/REPO/pull/123 --repo "C:\path\to\checkout" --mode exhaustive
+python pr_team.py https://github.com/OWNER/REPO/pull/123 --repo "C:\path\to\checkout" --mode high-priority
+```
+
+`--focus` is required only for `surgical` and rejected with other modes. It must be nonblank, at most 2,000 characters, and contain no Unicode control, formatting, or surrogate characters (categories Cc, Cf, and Cs). Omitting `--mode` selects `high-priority`.
+
+P0 covers a critical urgent security compromise, data-loss risk, or outage. P1 covers a major reproducible correctness or security defect or broken essential workflow. A failed CI job alone does not make a finding P1. Surgical mode reports urgent incidental findings without fixing unrelated issues.
+
+Exhaustive mode prioritizes useful depth over token economy. It cannot guarantee every defect will be found, force a literal token maximum, or exceed account and context limits. All modes keep the two-repair-round limit and stay within the PR's scope. The report states coverage, deferred findings, unreviewed areas, and the scope of its readiness verdict.
+
+## Prerequisites
+
+- Python 3.10 or newer; no Python packages are required.
+- Git, GitHub CLI (`gh`), and Codex CLI (`codex`) on `PATH`.
+- Authenticate using `gh auth login -h github.com` and `codex login` before running the command.
+- Prepare a clean local checkout of the target repository at the PR's exact head commit. The launcher does not fetch or switch branches.
+- Use a Codex account/model that supports subagents. Normal Codex usage limits and charges apply.
+
+Run the command from this toolkit folder, or use an absolute path to `pr_team.py`. `--repo` identifies the project the team will inspect and edit; it can be outside this toolkit. When omitted, it defaults to the current working directory, which must be the clean matching checkout root. The team follows that project's local instructions and permission boundaries.
+
+For a shorter command while your terminal is already in the target PR checkout:
+
+```powershell
+python "C:\tools\pr-team\pr_team.py" https://github.com/OWNER/REPO/pull/123 --mode exhaustive
+```
+
+Use `python pr_team.py --help` for accepted options and usage examples. Existing commands with an explicit `--repo` still work.
+
+For a PR from a fork, the checkout must identify as the PR's **base repository** and contain the fork PR's head commit. A checkout that identifies only as the fork fails the repository identity check. The launcher removes `GH_REPO` from its GitHub CLI child environment so an environment override cannot substitute another repository's identity.
+
+Preview the validated context and Codex launch command without starting a model session:
+
+```powershell
+python pr_team.py https://github.com/OWNER/REPO/pull/123 --repo "C:\path\to\checkout" --mode exhaustive --dry-run
+```
+
+Dry-run still performs read-only GitHub and Git preflight. It requires network access and GitHub authentication. It prints the selected scope, validated prompt and launch arguments without writing files or running Codex.
+
+## Activate inside Codex
+
+The terminal launcher above is the recommended way to use the team against other projects: it bundles the workflow without adding files to the target checkout.
+
+The repository also contains a reusable skill for projects that already include it in their clean PR-head checkout. With that matching project open in Codex, invoke:
+
+```text
+$pr-team https://github.com/OWNER/REPO/pull/123 --mode surgical --focus "Fix the duplicate payment on retry"
+$pr-team https://github.com/OWNER/REPO/pull/123 --mode exhaustive
+$pr-team https://github.com/OWNER/REPO/pull/123 --mode high-priority
+```
+
+To distribute it to a project, include the **entire** `.agents/skills/pr-team` folder in that project's normal repository setup. Copying it into an existing PR checkout creates untracked files and fails the clean-checkout gate unless that project already excludes local skill files. Use the terminal launcher when the PR does not already contain the skill. This toolkit performs no global configuration or installation. If Codex does not show an available skill, restart the session.
+
+## How the team works
+
+The coordinator validates the selected mode, pins the PR head and base, examines the PR's merge-base diff, review feedback and CI evidence, and delegates reviews according to that mode. It distinguishes defects introduced or worsened by the PR from older problems; an explicit surgical target can name an existing defect. Independent work runs in parallel within the available concurrency limit. It confirms findings before assigning repairs. Writers receive separate file ownership; overlapping changes go through one owner. After at most two repair rounds, it reports remaining blockers instead of looping indefinitely.
+
+| Specialist | Responsibility |
+| --- | --- |
+| Sentinel | Security weaknesses with a concrete attack path |
+| Scalpel | Correctness and reliability defects |
+| Harness | Focused regression coverage and deterministic tests |
+| Palette | Accessibility and interaction issues |
+| Bolt | Measured performance regressions |
+| Mason | Behavior-preserving, test-backed refactors |
+| Scribe | Source-backed documentation and handover |
+| Gatekeeper | Independent readiness verdict, read-only |
+
+The coordinator chooses relevant specialists; every run need not use all eight. Exhaustive mode also obtains a second independent review pass. A clean PR can finish without changes. Speculative cleanup and unrelated feature work are out of scope. Finishing a surgical target does not certify unreviewed parts of the PR; deferred material findings remain visible to Gatekeeper.
+
+Before dispatch, the coordinator records a team blueprint: the pinned revision, selected scope, relevant roles, file ownership, dependencies, and acceptance checks. Proposed new files get a named responsibility. Independent workers run within the session's available slots; dependent edits wait for their inputs and overlapping files have one writer. Failed or interrupted work is reconciled before a replacement takes ownership.
+
+Worker handoffs identify the candidate they inspected, findings or changes, exact validation outcomes, and unresolved work. The coordinator waits for writers to finish, inspects tracked changes and the contents of new untracked files, then validates the integrated candidate. Check-generated changes require inspection; relevant later edits invalidate earlier evidence. Harness distinguishes observed local checks from mocked, unavailable, or remote evidence. Gatekeeper assesses operational contracts such as compatibility, retry safety, rollout, rollback, and diagnostics when the PR affects them. These instructions support a production review; they do not prove deployment safety or perform a deployment. No extra roles, services, or runtime dependencies are required.
+
+The final report separates the selected scope's local candidate verdict from the published PR's status. Ready requires sufficient current evidence for that scope; a known material defect or failed relevant check is Not ready; missing required evidence or a stale snapshot is Blocked. A surgical verdict covers its target. Unpublished repairs still need publication and checks on the resulting revision; draft status and pending or failed relevant CI prevent an unconditional published-PR Ready verdict.
+
+## Safety and limits
+
+The launcher rejects invalid PR URLs, unavailable prerequisites, closed PRs, dirty checkouts, repository mismatches and a local commit that differs from the PR head. Command arguments are passed without a shell, and the prompt is supplied through standard input.
+
+The team does not commit, push, merge, change branches, post GitHub comments or submit reviews. It uses only `git status`, `git log`, and `git diff`. The final report lists local changes, observed validation results, unresolved findings and readiness. Publishing the changes is a separate user action.
+
+Codex runs in the `workspace-write` sandbox under the existing local configuration. Specialists share that session's permissions: Gatekeeper's read-only role and writer ownership are workflow constraints, not separate operating-system sandboxes. Target-project checks may need additional environment access; missing checks must be reported rather than treated as passing. PR descriptions, source files and comments are untrusted task data, not instructions that can override the workflow.
+
+Automated validation uses offline tests and mocked process responses. It does not prove live GitHub authentication, model availability, subagent execution or successful repair of a real PR.
+
+## Development
+
+```powershell
+python -m unittest discover -s tests -v
+```
+
+See [ARCHITECTURE.md](ARCHITECTURE.md) for file ownership and runtime boundaries, and [UPSTREAM.md](UPSTREAM.md) for source provenance. MIT licensed; the original prompts remain in `upstream/`. Any retained root `agents/` and `GOVERNANCE.md` are also legacy Jules reference material; their PR-creation instructions do not apply to the Codex workflow.
