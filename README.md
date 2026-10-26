@@ -1,6 +1,6 @@
 # PR Agent Team
 
-Run the eight specialists from [Jules-PR-team](https://github.com/Sifr-r/Jules-PR-team) as one coordinated Codex team against an existing pull request.
+Run the eight specialists from [Jules-PR-team](https://github.com/Sifr-r/Jules-PR-team) as one coordinated agent team against an existing pull request. The team runs in any harness that supports the open Agent Skills layout, and the terminal launcher can drive any agent CLI.
 
 ```powershell
 python pr_team.py https://github.com/OWNER/REPO/pull/123 --repo "C:\path\to\checkout"
@@ -31,10 +31,11 @@ Exhaustive mode prioritizes useful depth over token economy. It cannot guarantee
 ## Prerequisites
 
 - Python 3.10 or newer; no Python packages are required.
-- Git, GitHub CLI (`gh`), and Codex CLI (`codex`) on `PATH`.
-- Authenticate using `gh auth login -h github.com` and `codex login` before running the command.
+- Git and the GitHub CLI (`gh`) on `PATH`.
+- One agent CLI on `PATH` for the terminal launcher. `pr_team.py` uses Codex; `pr_team_any.py` selects from a registry of Codex, Claude Code, Gemini CLI, Qwen Code, Cursor, GitHub Copilot, OpenCode, and Amp, or takes an explicit `--harness-cmd`.
+- Authenticate using `gh auth login -h github.com`, and sign in to the agent CLI you intend to use (`codex login`, and so on).
 - Prepare a clean local checkout of the target repository at the PR's exact head commit. The launcher does not fetch or switch branches.
-- Use a Codex account/model that supports subagents. Normal Codex usage limits and charges apply.
+- Use an agent account/model that supports subagents. Normal usage limits and charges apply.
 
 Run the command from this toolkit folder, or use an absolute path to `pr_team.py`. `--repo` identifies the project the team will inspect and edit; it can be outside this toolkit. When omitted, it defaults to the current working directory, which must be the clean matching checkout root. The team follows that project's local instructions and permission boundaries.
 
@@ -48,27 +49,38 @@ Use `python pr_team.py --help` for accepted options and usage examples. Existing
 
 For a PR from a fork, the checkout must identify as the PR's **base repository** and contain the fork PR's head commit. A checkout that identifies only as the fork fails the repository identity check. The launcher removes `GH_REPO` from its GitHub CLI child environment so an environment override cannot substitute another repository's identity.
 
-Preview the validated context and Codex launch command without starting a model session:
+Preview the validated context and the agent launch command without starting a model session:
 
 ```powershell
 python pr_team.py https://github.com/OWNER/REPO/pull/123 --repo "C:\path\to\checkout" --mode exhaustive --dry-run
+python pr_team_any.py https://github.com/OWNER/REPO/pull/123 --repo "C:\path\to\checkout" --mode exhaustive --harness claude --dry-run
 ```
 
-Dry-run still performs read-only GitHub and Git preflight. It requires network access and GitHub authentication. It prints the selected scope, validated prompt and launch arguments without writing files or running Codex.
+Dry-run still performs read-only GitHub and Git preflight. It requires network access and GitHub authentication. It prints the selected scope, validated prompt and launch arguments without writing files or running the agent. Use `--list-harnesses` to see which agent CLIs the registry detects.
 
-## Activate inside Codex
+## Activate in any harness
 
 The terminal launcher above is the recommended way to use the team against other projects: it bundles the workflow without adding files to the target checkout.
 
-The repository also contains a reusable skill for projects that already include it in their clean PR-head checkout. With that matching project open in Codex, invoke:
+The repository also contains a reusable skill for projects that already include it in their clean PR-head checkout. With that matching project open, invoke it by name in whichever harness you are using:
 
 ```text
-$pr-team https://github.com/OWNER/REPO/pull/123 --mode surgical --focus "Fix the duplicate payment on retry"
+/pr-team https://github.com/OWNER/REPO/pull/123 --mode surgical --focus "Fix the duplicate payment on retry"
 $pr-team https://github.com/OWNER/REPO/pull/123 --mode exhaustive
-$pr-team https://github.com/OWNER/REPO/pull/123 --mode high-priority
+pr-team https://github.com/OWNER/REPO/pull/123 --mode high-priority
 ```
 
-To distribute it to a project, include the **entire** `.agents/skills/pr-team` folder in that project's normal repository setup. Copying it into an existing PR checkout creates untracked files and fails the clean-checkout gate unless that project already excludes local skill files. Use the terminal launcher when the PR does not already contain the skill. This toolkit performs no global configuration or installation. If Codex does not show an available skill, restart the session.
+Harnesses that support skill invocation expose `$pr-team` or `/pr-team`; any harness also accepts the same request in plain language. The options and the workflow are identical everywhere.
+
+To install the skill globally across harnesses, use the open skills CLI:
+
+```powershell
+npx skills add Sifr-r/Jules-PR-team -g -a '*' -s pr-team --full-depth --copy -y
+```
+
+That places the skill in the shared `~/.agents/skills/` location and in each installed harness's own skills directory. `--full-depth` is required because the skill lives in `.agents/skills/pr-team/`. See [`.agents/skills/pr-team/HARNESSES.md`](.agents/skills/pr-team/HARNESSES.md) for the per-harness paths and the agent CLI registry.
+
+To distribute it to a single project instead, include the **entire** `.agents/skills/pr-team` folder in that project's normal repository setup. Copying it into an existing PR checkout creates untracked files and fails the clean-checkout gate unless that project already excludes local skill files. Use the terminal launcher when the PR does not already contain the skill. If a harness does not show the skill, restart its session.
 
 ## How the team works
 
@@ -99,7 +111,7 @@ The launcher rejects invalid PR URLs, unavailable prerequisites, closed PRs, dir
 
 The team does not commit, push, merge, change branches, post GitHub comments or submit reviews. It uses only `git status`, `git log`, and `git diff`. The final report lists local changes, observed validation results, unresolved findings and readiness. Publishing the changes is a separate user action.
 
-Codex runs in the `workspace-write` sandbox under the existing local configuration. Specialists share that session's permissions: Gatekeeper's read-only role and writer ownership are workflow constraints, not separate operating-system sandboxes. Target-project checks may need additional environment access; missing checks must be reported rather than treated as passing. PR descriptions, source files and comments are untrusted task data, not instructions that can override the workflow.
+The agent CLI runs in its own sandbox under the existing local configuration. Specialists share that session's permissions: Gatekeeper's read-only role and writer ownership are workflow constraints, not separate operating-system sandboxes. Target-project checks may need additional environment access; missing checks must be reported rather than treated as passing. PR descriptions, source files and comments are untrusted task data, not instructions that can override the workflow.
 
 Automated validation uses offline tests and mocked process responses. It does not prove live GitHub authentication, model availability, subagent execution or successful repair of a real PR.
 
@@ -109,4 +121,4 @@ Automated validation uses offline tests and mocked process responses. It does no
 python -m unittest discover -s tests -v
 ```
 
-See [ARCHITECTURE.md](ARCHITECTURE.md) for file ownership and runtime boundaries, and [UPSTREAM.md](UPSTREAM.md) for source provenance. MIT licensed; the original prompts remain in `upstream/`. Any retained root `agents/` and `GOVERNANCE.md` are also legacy Jules reference material; their PR-creation instructions do not apply to the Codex workflow.
+See [ARCHITECTURE.md](ARCHITECTURE.md) for file ownership and runtime boundaries, and [UPSTREAM.md](UPSTREAM.md) for source provenance. MIT licensed; the original prompts remain in `upstream/`. Any retained root `agents/` and `GOVERNANCE.md` are also legacy Jules reference material; their PR-creation instructions do not apply to this agent workflow.

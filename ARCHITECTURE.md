@@ -1,5 +1,25 @@
 # Architecture ledger
 
+## Harness portability blueprint and completion
+
+Make the skill and the launcher usable from any agent harness, not only Codex. Keep the existing directory structure, eight specialist roles, three scope modes, launcher contract, and read-only GitHub boundary. The change is additive: the original launcher and package modules stay byte-identical, and portability is delivered by new files plus targeted edits to the skill and documentation.
+
+| Owned paths | Single responsibility and acceptance |
+| --- | --- |
+| .agents/skills/pr-team/SKILL.md | Replace the Codex-only activation line with harness-neutral invocation, and add a capability-detection contract for GitHub access, delegation, and sandboxing. Preserve scope modes, role definitions, repair-round limit, and the readiness verdict. |
+| .agents/skills/pr-team/HARNESSES.md | Record per-harness skill locations, invocation forms, the agent CLI registry, and the override format. Documentation only. |
+| prteam/harness.py | Own the agent CLI registry, PATH detection, argv rendering, and user override loading. One responsibility: describing how to start a harness. |
+| pr_team_any.py | Own the portable launcher entry point. Reuse the upstream preflight and prompt builder unchanged, then hand the prompt to the selected agent CLI. |
+| tests/test_harness.py | Offline coverage for registry defaults, override parsing, selection order, and launch-argument rendering. |
+| harnesses.example.json | Documented template for the operator override file. |
+| README.md | Integration owner: document the portable launcher, the global install command, and the harness-neutral invocation forms. |
+| AGENTS.md | Integration owner: name the new module ownership and drop the Codex-only framing. |
+| ARCHITECTURE.md | Integration owner: record this blueprint, final responsibilities, and observed verification. |
+
+Completed: the skill no longer assumes a vendor. It activates through `/pr-team`, `$pr-team`, or a plain request, and it detects the host at runtime — native GitHub tools or MCP before the `gh` CLI, the host's subagent mechanism for parallel delegation, and the host's own sandbox. When a host has no subagent mechanism the roles run sequentially, the report states that role independence was reduced, and the final verdict is Blocked with that prerequisite rather than a simulated sign-off. `pr_team_any.py` reuses the upstream preflight, scope policy, and prompt builder unchanged and adds only the choice of agent CLI; `pr_team.py` is untouched and still Codex-specific. The registry keeps the prompt on stdin so PR content never reaches the process table, and every template other than `codex` is marked unverified and overridable. All eight role references were already vendor-neutral and are unchanged.
+
+Verification: all 66 offline unittest tests pass, 47 inherited and 19 new, run from the repository root as a git checkout. The 19 new tests cover registry defaults, the verified/unverified distinction, stdin prompt delivery, `{repo}` substitution, override precedence, malformed configuration rejection, auto-selection order, and the no-CLI error path. The original launcher, package modules, and three original test modules are byte-identical to the previous release, confirmed by SHA-256 comparison. The skill frontmatter still validates, all eight reference links resolve, and prompt construction still inlines the full skill and every role in all three modes. The agent CLI templates other than `codex` are unverified: no agent CLI was installed on the validation machine, so only the registry's detection, rendering, and override behaviour are proven. These checks do not prove live PR repair or model execution by any harness.
+
 ## GitHub publication blueprint
 
 Publish the reviewed workspace as a proposed update to `Sifr-r/Jules-PR-team` on `codex/pr-team-workflow`, based on remote `main` at `9f9bcd563141923c77d6deec7f2cc5f3e5805bd0`. The user's publication request authorizes this release step; the launched PR-review workflow retains its read-only GitHub contract. Local Git history and configuration remain untouched.
@@ -59,7 +79,7 @@ Upstream is a prompt library, not an executable multi-agent system. Preserve ori
 
 ## Acceptance
 Scope expansion implemented from the pre-dispatch blueprint: prteam/scope.py owns typed mode policies and validation; cli.py parses and injects the selected scope. README.md and SKILL.md specify matching terminal/chat commands. The test suites cover scope boundaries and propagation. Existing GitHub and checkout boundaries remain in force.
-One command, python pr_team.py <github-pr-url> --repo <local-checkout>, validates a clean checkout at the PR head, reads GitHub PR context, and starts Codex with multi-agent enabled.
+One command, python pr_team.py <github-pr-url> --repo <local-checkout>, validates a clean checkout at the PR head, reads GitHub PR context, and starts Codex with multi-agent enabled. The same command shape is available through pr_team_any.py, which selects a different agent CLI without changing the preflight, the scope policy, or the prompt.
 The orchestrator delegates independent reviews, scopes evidence-backed local repairs, validates, and issues a read-only Gatekeeper verdict. No GitHub writes, commits, push, checkout, reset, rebase, or merge.
 A repo-local $pr-team skill supplies the same orchestration inside Codex.
 Validation must cover input validation, subprocess safety, wrong/dirty checkout refusal, launch arguments, command failures, and dry-run behavior without paid model calls.
@@ -72,6 +92,8 @@ Validation must cover input validation, subprocess safety, wrong/dirty checkout 
 | prteam/cli.py | Argument parsing, preflight, prompt construction, Codex invocation, contextual failures. |
 | prteam/scope.py | Immutable validated scope selections and deterministic mode policies. |
 | prteam/github.py | Strict PR URL parsing and read-only gh/Git subprocess adapters, validating remote identity and checkout head. |
+| prteam/harness.py | Agent CLI registry, PATH detection, argv rendering, and operator override loading for harness-neutral launching. |
+| pr_team_any.py | Portable launcher entry point. Reuses the upstream preflight and prompt builder, then hands the prompt to the selected agent CLI. |
 | .agents/skills/pr-team/SKILL.md | Coordinator workflow, team blueprint and task lifecycle, exclusive ownership, bounded repair loop and final evidence contract. |
 | .agents/skills/pr-team/references/bolt.md | Measured performance review and repair. |
 | .agents/skills/pr-team/references/palette.md | Accessibility and interaction review and repair. |
@@ -82,9 +104,12 @@ Validation must cover input validation, subprocess safety, wrong/dirty checkout 
 | .agents/skills/pr-team/references/scribe.md | Source-backed documentation and handover. |
 | .agents/skills/pr-team/references/gatekeeper.md | Independent read-only readiness verdict, relevant operational contracts and final-candidate evidence gaps. |
 | .agents/skills/pr-team/agents/openai.yaml | Skill discovery metadata. |
+| .agents/skills/pr-team/HARNESSES.md | Per-harness install locations, invocation forms, agent CLI registry, and override format. |
+| harnesses.example.json | Documented template for overriding the agent CLI registry. |
 | tests/test_cli.py | Offline launcher boundary and end-to-end subprocess-contract tests. |
 | tests/test_scope.py | Offline mode, focus, immutability and policy-selection verification. |
 | tests/test_github.py | Offline URL, metadata and checkout safety tests. |
+| tests/test_harness.py | Offline agent CLI registry, override, selection, and launch-argument tests. |
 | README.md | Installation prerequisites, exact activation commands and limitations. |
 | AGENTS.md | Contributor safety, ownership, and actual validation commands. |
 | .gitignore | Exclude Python caches only. |
@@ -104,8 +129,8 @@ Validation must cover input validation, subprocess safety, wrong/dirty checkout 
 | upstream/agents/gatekeeper.md | Preserve original readiness prompt. |
 
 ## Runtime boundaries
-Python 3.10+ standard library only. Existing codex and gh authentication; no added SDK, service, dependency or global configuration.
-CLI passes argument arrays with shell=False, supplies the prompt through stdin, and runs codex exec --enable multi_agent --sandbox workspace-write -C <repo> -.
+Python 3.10+ standard library only. Existing agent CLI and gh authentication; no added SDK, service, dependency or global configuration.
+CLI passes argument arrays with shell=False, supplies the prompt through stdin, and runs codex exec --enable multi_agent --sandbox workspace-write -C <repo> -. The portable launcher substitutes one agent CLI for another through prteam/harness.py; the prompt stays on stdin and no shell is involved.
 Preflight uses only git status and git log. GitHub reads use gh pr view and gh api GET; no shell-built commands or external mutations.
 All specialist writing is coordinated with explicit file ownership. Gatekeeper is instructed read-only; shared native subagents inherit the session sandbox, so this is a workflow constraint, not OS isolation.
 
@@ -117,7 +142,7 @@ All changes remain local. A successful Codex process exit is not a machine-check
 Direct $pr-team invocation requires the skill available without introducing dirty checkout files. The terminal launcher is the primary path for another existing project. Re-running after local repairs intentionally stops until the user handles those changes.
 
 ## Verification
-47 offline unittest tests pass, including a complete launcher path with mocked external processes, URL and metadata validation, checkout gates, GH_REPO isolation, mode/focus validation, scope propagation, current-directory defaults, dry-run and exit handling. Tests use Python 3.10-compatible APIs.
+66 offline unittest tests pass, including a complete launcher path with mocked external processes, URL and metadata validation, checkout gates, GH_REPO isolation, mode/focus validation, scope propagation, current-directory defaults, dry-run and exit handling, plus 19 agent CLI registry tests covering defaults, overrides, selection order, and launch-argument rendering. Tests use Python 3.10-compatible APIs.
 The skill frontmatter validator passed. Installed Codex CLI help and feature output confirm the required exec flags and multi_agent capability.
 No paid model session or live PR repair was executed: no target PR was supplied, and local gh authentication was invalid during verification.
 
