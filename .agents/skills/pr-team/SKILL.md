@@ -1,11 +1,24 @@
 ---
 name: pr-team
 description: Coordinate specialist agents to review and repair one existing GitHub pull request in its local checkout, then report validation and readiness. Use for working through a PR with an agent team, not for creating unrelated improvements.
+license: MIT
 ---
 
 # PR Team
 
-Activate with `$pr-team https://github.com/OWNER/REPO/pull/123 --mode high-priority` in the PR checkout, or use `python pr_team.py <PR-URL> --repo <checkout> --mode <mode>`. Work one existing PR through evidence-backed review, local fixes, verification, and an independent readiness verdict. Preserve the original team's eight specialist roles.
+Activate by invoking the skill by name in the PR checkout — `/pr-team <PR-URL> --mode <surgical|exhaustive|high-priority>`, `$pr-team <PR-URL> --mode <...>`, or a plain request such as "review this pull request with the pr-team skill". The options and the workflow are identical in every harness. When the host has no skill-invocation syntax, run the bundled launcher instead: `python pr_team.py <PR-URL> --repo <checkout> --mode <mode>`, or `python pr_team_any.py <PR-URL> --repo <checkout> --mode <mode> --harness <host>` to drive a specific agent CLI. Work one existing PR through evidence-backed review, local fixes, verification, and an independent readiness verdict. Preserve the original team's eight specialist roles.
+
+## Harness portability
+
+This skill uses the open Agent Skills layout — `SKILL.md` plus `references/` — so it loads unchanged in any harness that supports that layout. Keep the workflow vendor-neutral: detect the host's capabilities at runtime instead of assuming a particular agent, CLI, or tool set.
+
+| Capability | Detect | Use | When absent |
+| --- | --- | --- | --- |
+| Read-only GitHub access | harness-native GitHub tools or MCP servers, then the authenticated `gh` CLI | the first route that works | report Blocked with the exact missing prerequisite; never simulate a team |
+| Parallel delegation | the host's native subagent mechanism — task delegation, agent teams, or equivalent | concurrent read-only roles within the available slot limit | run the selected roles sequentially in one session and record that role independence was reduced; the independent final gate then cannot be satisfied, so the final verdict is Blocked with that exact prerequisite while the findings are still reported |
+| Filesystem sandbox | the host's own sandbox and permission model | stay inside the target checkout | never widen permissions to complete a review |
+
+Treat the eight specialist roles as the stable contract; the mechanism that dispatches them is the host's business.
 
 ## Select the scope
 
@@ -23,7 +36,7 @@ Exhaustive mode spends more effort and tokens on useful coverage, including its 
 
 ## Establish the review snapshot
 
-Read the target checkout's applicable contributor instructions and discover its actual package manager, CI, and validation commands. Resolve the GitHub URL strictly to an owner, repository, and positive PR number. Use the connected GitHub tools when available; otherwise use authenticated `gh` read operations. If authorization or native subagent tools are unavailable, report Blocked with the exact missing prerequisite; do not simulate a team.
+Read the target checkout's applicable contributor instructions and discover its actual package manager, CI, and validation commands. Resolve the GitHub URL strictly to an owner, repository, and positive PR number. Obtain remote evidence through the first available read-only route: harness-native GitHub tools or MCP servers, then authenticated `gh` operations. If authorization is unavailable, report Blocked with the exact missing prerequisite; do not simulate a team. When the host has no native subagent mechanism, apply the delegation fallback in *Harness portability* instead of aborting the review.
 
 Get PR metadata and pin its head and base commit IDs and base target. Require an open PR, a clean initial `git status --porcelain`, and a local `git log -1 --format=%H` matching the pinned head. Confirm that the checkout belongs to the PR's base repository, including for fork PRs. Refuse a dirty or mismatched checkout without rewriting it. The launcher supplies validated metadata; it does not supply a complete review snapshot.
 
@@ -41,7 +54,7 @@ Keep a task roster with task ID, agent ID, role, scope, authority, owned paths, 
 
 ## Delegate review in parallel
 
-Use native subagents according to the selected mode's delegation policy above; surgical mode does not start a broad Sentinel/Scalpel/Harness sweep. Run independent read-only reviews concurrently within the available slot limit; use waves when capacity is smaller. Route UI concerns to Palette, measured performance concerns to Bolt, verified maintenance needs to Mason, and documentation contracts to Scribe when relevant to the mode. Do not manufacture a task for every role.
+Use the host's native subagent mechanism according to the selected mode's delegation policy above; surgical mode does not start a broad Sentinel/Scalpel/Harness sweep. Run independent read-only reviews concurrently within the available slot limit; use waves when capacity is smaller. Route UI concerns to Palette, measured performance concerns to Bolt, verified maintenance needs to Mason, and documentation contracts to Scribe when relevant to the mode. Do not manufacture a task for every role.
 
 All links below are relative to this skill directory. When the launcher has inlined the reference contents, use those named sections directly instead of attempting filesystem reads.
 
@@ -60,7 +73,7 @@ Each dispatch must provide the selected mode and focus or severity filter, pinne
 
 Use bounded assignments with explicit completion conditions. Every worker handoff must identify its task and reviewed snapshot, files inspected or changed, verified findings or an explicit no-findings result, actual checks and outcomes, remaining uncertainty, and required next owner. Inspect the artifacts and combined diff before accepting a completion message; a worker's success claim alone is not validation. Record failed or cancelled tasks as coverage gaps rather than silently dropping them. If a worker stalls, exceeds its assignment, or loses required evidence, request a status or stop it with the available native controls. Confirm it has stopped before reassigning its owned files, inspect any partial changes, and preserve them for a scoped handoff. Never launch a replacement writer while the original can still write. Do not repeat a failed assignment without a concrete change in evidence or approach, and keep retries within the same two repair rounds. Results from an earlier candidate must be rechecked against any intervening relevant edits before they can support the final gate.
 
-Read-only review is a workflow restriction. Native subagents inherit the session sandbox; this skill does not provide separate OS isolation.
+Read-only review is a workflow restriction. Subagents inherit the host runtime's sandbox; this skill does not provide separate OS isolation.
 
 ## Repair verified findings
 

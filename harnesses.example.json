@@ -1,0 +1,46 @@
+{
+  "harnesses": {
+    "claude": {
+      "command": "claude",
+      "args": ["-p", "--permission-mode", "acceptEdits"],
+      "prompt_delivery": "stdin",
+      "note": "Claude Code CLI. Confirm the flags with pr_team_any.py --dry-run."
+    },
+    "gemini": {
+      "command": "gemini",
+      "args": ["--yolo"],
+      "prompt_delivery": "stdin",
+      "note": "Gemini CLI in non-interactive mode."
+    },
+    "qwen": {
+      "command": "qwen",
+      "args": ["--yolo"],
+      "prompt_delivery": "stdin",
+      "note": "Qwen Code CLI."
+    },
+    "cursor": {
+      "command": "cursor-agent",
+      "args": ["-p"],
+      "prompt_delivery": "stdin",
+      "note": "Cursor agent CLI."
+    },
+    "copilot": {
+      "command": "copilot",
+      "args": ["-p"],
+      "prompt_delivery": "stdin",
+      "note": "GitHub Copilot CLI."
+    },
+    "opencode": {
+      "command": "opencode",
+      "args": ["run"],
+      "prompt_delivery": "stdin",
+      "note": "OpenCode CLI."
+    },
+    "amp": {
+      "command": "amp",
+      "args": ["-x"],
+      "prompt_delivery": "stdin",
+      "note": "Amp CLI."
+    }
+  }
+}
