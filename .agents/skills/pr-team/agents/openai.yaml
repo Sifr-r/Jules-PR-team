@@ -1,6 +1,6 @@
 interface:
   display_name: "PR Team"
-  short_description: "Review and repair a PR with specialist agents"
-  default_prompt: "Use $pr-team to work through this GitHub pull request in its local checkout."
+  short_description: "Audit or build with focused specialist agents"
+  default_prompt: "Use $pr-team for this task in the current workspace. Establish the job and focused or exhaustive scope, then select specialist niche instructions. A PR URL is optional."
 policy:
   allow_implicit_invocation: true

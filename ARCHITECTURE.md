@@ -1,5 +1,167 @@
 # Architecture ledger
 
+## Production-team exhaustive audit, verification, and hardening blueprint and completion (30 October 2026)
+
+Assess the repository through its own eight-role production-team workflow (`exhaustive` scope, local repair authority, no publication), verify multi-agent orchestration across all seven domain specialists and an independent read-only Gatekeeper, and resolve verified boundary, subprocess-isolation, CLI-contract, test-isolation, and documentation findings.
+
+| Owned paths | Single responsibility and acceptance |
+| --- | --- |
+| prteam/harness.py; pr_team_any.py | Infer `prompt_delivery="arg"` when `--harness-cmd` includes `{prompt}`; reject placeholders in `Harness.command`; validate `Harness.render()` inputs; fail closed on missing/unreadable explicit `--config <path>` and non-file default configs; reject empty, whitespace, control-character, and non-string harness names in `select()`/`resolve()`; avoid duplicate config reads in `select("auto")`; resolve the selected harness CLI before `gh`/`git` preflight in `pr_team_any.py`; support `codex.exe` / path stems for `--skip-git-repo-check`; report actionable command-line limit guidance when `arg` delivery fails with `OSError`. |
+| prteam/github.py; prteam/workspace.py; prteam/cli.py; prteam/scope.py; prteam/__init__.py | Scrub inherited `GIT_DIR`, `GIT_WORK_TREE`, `GIT_INDEX_FILE`, `GIT_OBJECT_DIRECTORY`, `GIT_ALTERNATE_OBJECT_DIRECTORIES`, and `GIT_COMMON_DIR` overrides in Git subprocesses; set `GIT_OPTIONAL_LOCKS="0"` on `git` calls in `prteam/github.py`; tailor `git` vs `gh` error remediation; validate `pr` and `repo` types in `build_prompt`, `read_pr`, and `validate_checkout`; distinguish mandatory `surgical` vs optional `focused` `--focus` errors; update `prteam/__init__.py` docstring. |
+| .agents/skills/pr-team/SKILL.md; HARNESSES.md; references/shared.md; references/routing.md; references/gatekeeper/ROLE.md; README.md; UPSTREAM.md | Document all nine canonical `--task` job strings and `build` initial role routing (`mason, scalpel, harness, gatekeeper`); define `P2` vs `P3`; specify early-stopped batch candidate numbering (`C1`/`C2`) and `Not ready` vs `Blocked` Gatekeeper verdict precedence; align harness tables/lists with `AUTO_PRIORITY`; document `--task` validation bounds, explicit `--config` validation, `--harness-cmd` `{prompt}` delivery, and workspace-first upstream adaptation. |
+| tests/test_harness.py; tests/test_cli.py; tests/test_github.py; tests/test_workspace.py; tests/test_scope.py | Replace all eight `tempfile.TemporaryDirectory()` fixtures in `tests/test_harness.py` with in-memory `Path` mocks so the entire suite runs without OS temp-directory permissions; isolate default config paths; add unit and end-to-end offline contract tests (`PortableEndToEndContractTests`) for `F-01` through `F-06`. |
+| ARCHITECTURE.md | Integration owner records the production-team blueprint, dependency direction, current file inventory, and verified offline results. |
+
+Dependency direction (strict DAG, zero circular imports): `prteam/github.py` (stdlib) -> `prteam/{workspace,scope,routing,harness}.py` -> `prteam/prompts.py` -> `prteam/cli.py` -> `pr_team.py` and `pr_team_any.py`.
+
+Active file inventory and single responsibilities:
+
+| Path | Responsibility |
+| --- | --- |
+| pr_team.py | Thin executable entry point for Codex launches. |
+| pr_team_any.py | Portable launcher entry point across registered or custom agent CLIs. |
+| prteam/__init__.py | Python package marker. |
+| prteam/cli.py | Argument parsing, preflight orchestration, prompt construction, Codex invocation, contextual failures. |
+| prteam/scope.py | Immutable validated scope selections (`focused`, `surgical`, `exhaustive`, `high-priority`) and deterministic mode policies. |
+| prteam/routing.py | Immutable validated task intent, publication authority flag, and canonical role-resource plans. |
+| prteam/prompts.py | Confined, deterministic packaging of shared contracts and role/niche prompt resources. |
+| prteam/workspace.py | Read-only local and fresh workspace snapshots with Git environment isolation. |
+| prteam/github.py | Strict PR URL parsing and read-only `gh`/Git subprocess adapters, validating remote identity and checkout head. |
+| prteam/harness.py | Agent CLI registry, `PATH` detection, single-pass argv rendering, and operator override loading. |
+| harnesses.example.json | Documented template for overriding the agent CLI registry. |
+| .agents/skills/pr-team/SKILL.md | Coordinator workflow, team blueprint and task lifecycle, exclusive ownership, bounded repair loop, and final evidence contract. |
+| .agents/skills/pr-team/HARNESSES.md | Per-harness install locations, invocation forms, agent CLI registry, `AUTO_PRIORITY`, and override format. |
+| .agents/skills/pr-team/SOURCES.md | Contributor-facing capability research provenance and deliberate integration boundaries (outside runtime packaging). |
+| .agents/skills/pr-team/agents/openai.yaml | Skill discovery metadata. |
+| .agents/skills/pr-team/references/shared.md | Shared worker authority, candidate tracking (`C0`/`C1`/`C2`), provenance, validation, and handoff contracts. |
+| .agents/skills/pr-team/references/routing.md | Top-down intent discovery and role/niche routing catalog. |
+| .agents/skills/pr-team/references/{bolt,palette,sentinel,scalpel,harness,mason,scribe,gatekeeper}/ROLE.md | Eight specialist parent role contracts and niche activation tables. |
+| .agents/skills/pr-team/references/{bolt,palette,sentinel,scalpel,harness,mason,scribe,gatekeeper}/*.md | Thirty-eight focused niche guides across the eight specialist directories. |
+| tests/test_{cli,scope,routing,prompts,workspace,github,harness}.py | Offline unit and end-to-end contract tests (100% in-memory, zero temp-directory or external process execution). |
+| README.md; AGENTS.md; UPSTREAM.md; ARCHITECTURE.md; LICENSE; .gitignore | Operator usage, contributor safety, upstream provenance, architecture ledger, MIT license, and ignore rules. |
+| upstream/** | Archived original Jules prompts and governance retained for provenance. |
+
+Completed: Wave 1 dispatched four parallel read-only specialist audit subagents covering all seven domain roles (`Sentinel`, `Scalpel`, `Mason`, `Bolt`, `Harness`, `Palette`, `Scribe`) on candidate `C0`. Findings were deduplicated into `F-01` through `F-07`. Batch 1 (`C0 -> C1`) dispatched four parallel scoped writer subagents with strictly disjoint file ownership. All eight previously blocked temp-directory test fixtures now run completely in-memory.
+
+Validation: all 137 discovered offline tests ran and passed (`Ran 137 tests in 0.296s OK`), with zero skipped or permission-blocked cases. All Python modules pass `py_compile`, `git diff --check` passes cleanly, all 48 skill resources and local Markdown links resolve, and an independent second review pass plus independent read-only Gatekeeper verified candidate `C1`. No paid external CLI session or Git/GitHub mutation was performed.
+
+## Researched capability expansion blueprint and completion (30 October 2026)
+
+Expand the existing eight roles with seventeen focused guides, emphasizing Palette's missing visual-design workflow. Preserve task/scope/authority boundaries, the standard-library launcher, offline packaging, complete coordinator availability, and narrow worker dispatch. Inspect primary skill/standard sources; write original guidance rather than importing external scripts, styles, binaries, or global skills. Keep source history outside runtime prompt resources.
+
+| Owned paths | Single responsibility and acceptance |
+| --- | --- |
+| references/palette/visual-direction.md | Establish audience/surface/brand constraints and a deliberate, brief-specific visual direction. |
+| references/palette/visual-system.md | Preserve or define a coherent typography, color, spacing, density, and component vocabulary. |
+| references/palette/motion.md | Explain state changes with interruptible, reduced-motion-aware transitions. |
+| references/palette/imagery-content.md | Select truthful product content and assets with evidence of provenance and usage rights. |
+| references/palette/visual-review.md | Critique rendered states, prioritize evidence-backed design improvements, and verify the final candidate. |
+| references/sentinel/threat-model.md | Identify assets, trust boundaries, and reachable workflow/business-abuse paths. |
+| references/sentinel/supply-chain.md | Assess dependency and artifact identity/provenance without claiming trust from missing or superficial signals. |
+| references/scalpel/compatibility-migrations.md | Preserve old/new caller and data contracts through reversible compatibility transitions. |
+| references/harness/stateful-testing.md | Prove invariants over reproducible input/action sequences with existing test tools. |
+| references/harness/contract-testing.md | Verify actual consumer/provider assumptions without treating mocked success as compatibility proof. |
+| references/bolt/web-performance.md | Diagnose user-facing loading, interaction, and layout stability with comparable browser evidence. |
+| references/bolt/query-plans.md | Inspect query plans, workload/cardinality, and actual execution costs safely. |
+| references/bolt/capacity-backpressure.md | Establish bounded queue/concurrency behavior under overload and retry amplification. |
+| references/mason/interface-design.md | Design a small public seam that contains domain complexity and supports meaningful tests. |
+| references/mason/architecture-boundaries.md | Identify and verify concrete dependency-direction, layering, and cycle constraints. |
+| references/scribe/documentation-structure.md | Match reader intent to tutorial, task guidance, reference, or explanation without unnecessary document churn. |
+| references/gatekeeper/reliability-evidence.md | Assess relevant user-facing indicators, release criteria, attribution, and recovery ownership without deploying. |
+| references/<role>/ROLE.md | Domain owners add discoverable triggers and distinguish requested improvements from verified defects. |
+| prteam/routing.py; tests/test_prompts.py | Register every guide and verify reverse inventory, unique ownership, parent indexes, and offline packaging. |
+| .agents/skills/pr-team/SOURCES.md | Contributor-facing research provenance: primary URLs, checked date, usage terms for reviewed skills, adopted/omitted ideas, and guide mapping; not runtime-bundled. |
+| references/routing.md; SKILL.md; README.md; ARCHITECTURE.md | Integration owner documents optional capability selection, source trust, actual verification, and prompt-size tradeoff. |
+
+All reference paths above are under `.agents/skills/pr-team/`. Parallel owners: Palette content; other-role content; runtime catalog/integrity. The integration owner maintains routing, source research, and the ledger. Baseline: 31 runtime resources, 65,307 resource characters, and an 81,420-character focused-UI coordinator prompt. The previous runnable offline suite passed 112/120 tests; eight known sandbox temporary-directory fixture failures are not retried. Stop when all new guides are discoverable and packaged exactly once, source provenance is recorded, requested visual design and read-only critique route correctly, and bounded offline checks/independent scenarios pass. No paid sessions or Git/GitHub mutations are authorized for implementation/testing.
+
+Completed: seventeen independently written niche guides and eight updated role parents provide 38 niches across the existing team. Palette now owns deliberate visual creation and critique in addition to flow/accessibility. Parent/shared contracts distinguish verified behavioral defects, explicitly requested visual acceptance, and optional aesthetic observations; none grants redesign or publication authority. Routing resolves prerequisite decisions from available evidence before asking material human questions. Contributor research records Taste, Impeccable, Anthropic, Vercel, Matt Pocock, Trail of Bits, Superpowers, and the relevant primary technical sources, checked on 30 October 2026, with adopted/omitted ideas and reviewed skill usage terms. No external suite, script, binary, asset, or dependency was installed or vendored. Existing launcher, scope, permission, and publication behavior remains unchanged.
+
+Validation: 125 tests discovered; all 117 runnable offline tests passed. Eight known permission-blocked temporary-directory fixture cases remain unrun, so this is not a full-suite pass. All 48 runtime resources are registered, nonempty, uniquely owned, discoverable through parent/routing indexes, and packaged exactly once. New tests compare the actual reference tree against the manifest and resolve local Markdown links across the complete skill. The skill validator and `git diff --check` passed. A subsequent instruction-only independent pass exercised incumbent-brand UI polish, a source-only exhaustive UI audit, query/overload work without production access, old-client compatibility with unavailable provider proof, and prototype supply-chain/release assessment. It found one narrow ambiguity around auditing unchanged artifacts, which was corrected in the guide and both activation indexes; all twelve affected catalog/resource tests passed afterward. No rendered UI, performance gain, live compatibility, model execution, or publication success is claimed from these checks.
+
+Context tradeoff: registered resource text grew from 65,307 to 110,357 characters. A minimal workspace snapshot (`source=workspace`, `git=false`) with focused scope and canonical UI task now produces a 128,493-character coordinator prompt, compared with the 81,420-character baseline (+57.8%). The coordinator retains the complete catalog for isolated cross-domain handoffs; workers receive only shared/role/chosen-niche guidance. `SOURCES.md` remains outside runtime packaging. Character counts are not token, cost, or latency measurements.
+
+## Workspace-first team and niche routing blueprint and completion
+
+The team starts with `/pr-team <task> --scope focused|exhaustive` in the current workspace. A PR URL is optional. Existing-PR review remains compatible; local audits and fresh implementation do not require GitHub. An explicit publication request may authorize the launched team to create a new PR, while developing and testing this toolkit never mutates GitHub or Git history.
+
+| Owned paths | Single responsibility and acceptance |
+| --- | --- |
+| prteam/routing.py; tests/test_routing.py | Validate human task data, select available role resources for known jobs, and leave natural-language intent routing to the coordinator without guessing authorization. |
+| prteam/prompts.py; tests/test_prompts.py | Deterministically package shared contracts and role/niche resources, reject missing/unreadable/escaping resources, and keep dispatch instructions self-contained. |
+| prteam/workspace.py; tests/test_workspace.py | Read a local workspace snapshot, including fresh directories without Git history; no GitHub dependency or state mutation. |
+| prteam/scope.py; tests/test_scope.py | Add focused breadth while preserving existing surgical, exhaustive, and high-priority behavior. |
+| prteam/cli.py; pr_team_any.py; tests/test_cli.py; tests/test_harness.py | Optional PR URL, task/scope/publication arguments, source-appropriate preflight, and backwards-compatible launch contracts. |
+| .agents/skills/pr-team/SKILL.md; HARNESSES.md; references/shared.md; references/routing.md | Workspace-first invocation, top-down intent discovery, breadth/role separation, explicit new-PR publication authority, and portable self-contained worker contracts. |
+| references/{sentinel,scalpel,harness,gatekeeper}/ROLE.md and niche guides | Preserve existing role identities and evidence standards; split security, correctness, testing, and readiness questions into focused resources. |
+| references/{palette,bolt,mason,scribe}/ROLE.md and niche guides | Preserve existing specialist contracts; provide focused UI, performance, maintainability, and documentation questions. |
+| README.md; ARCHITECTURE.md | Explain concrete command examples, per-file responsibilities, actual checks, and unverified live behavior. |
+
+New resource responsibilities (paths below are relative to `.agents/skills/pr-team/references/`):
+
+| Resource | Single responsibility |
+| --- | --- |
+| shared.md | Worker authority, baseline/provenance, dispatch, validation, and handoff contracts. |
+| routing.md | Top-down intent discovery and relevant role/niche selection. |
+| palette/ROLE.md | Own the requested user experience and route interaction questions. |
+| palette/intent-flow.md | Establish actors, state transitions, recovery, and observable flow completion. |
+| palette/keyboard-focus.md | Keyboard reachability, focus placement, and restoration. |
+| palette/semantics.md | Accessible names, roles, relationships, and state. |
+| palette/forms-feedback.md | Input validation, async feedback, success, and recovery interaction. |
+| palette/responsive.md | Flow usability across content size, viewport, and zoom. |
+| sentinel/ROLE.md | Own concrete security boundaries and security-specific evidence. |
+| sentinel/authorization.md | Actor/action/resource permission enforcement. |
+| sentinel/execution-boundaries.md | Injection, paths, subprocesses, and unsafe execution/deserialization. |
+| sentinel/sensitive-data.md | Secret and sensitive-data exposure across storage and output. |
+| scalpel/ROLE.md | Own requested correctness and reliability invariants. |
+| scalpel/state-retries.md | State transitions, partial failure, retries, and idempotence. |
+| scalpel/async-resources.md | Concurrency, cancellation, ordering, and resource cleanup. |
+| scalpel/boundary-errors.md | Input boundaries, contextual errors, and caller contracts. |
+| harness/ROLE.md | Own meaningful regression and acceptance protection. |
+| harness/regression-proof.md | Failure-path and new-behavior proof across candidate transitions. |
+| harness/isolation-flakiness.md | Deterministic clocks, fixtures, state isolation, and reproducible failures. |
+| bolt/ROLE.md | Own measured performance and resource evidence. |
+| bolt/latency-throughput.md | Request-path latency, workload, throughput, and measurement validity. |
+| bolt/resource-lifecycle.md | CPU, memory, connection, and resource-lifetime costs. |
+| mason/ROLE.md | Own cohesive responsibility boundaries and preserved behavior. |
+| mason/responsibility-boundaries.md | Locate the owner of rules and prevent cross-layer contract drift. |
+| mason/behavior-preservation.md | Preserve exports, ordering, side effects, and error behavior during refactors. |
+| scribe/ROLE.md | Own source-backed documentation and contract communication. |
+| scribe/interface-contracts.md | Document actual CLI/API/configuration inputs, defaults, outputs, and errors. |
+| scribe/setup-guides.md | Validate setup/migration prerequisites and distinguish inspected from executed examples. |
+| gatekeeper/ROLE.md | Independently assess scoped readiness without implementation or publication authority. |
+| gatekeeper/evidence-freshness.md | Candidate completeness, stopped writers, and current validation/remote evidence. |
+| gatekeeper/operational-readiness.md | Compatibility, failure/retry, diagnostic, and rollout/rollback evidence. |
+
+Parallel ownership: runtime resource/snapshot modules, coordinator/core role resources, and UI/other specialist resources have separate owners. The integration owner handles entry points, scope, compatibility tests, and documentation. Preserve the current uncommitted harness changes. Stop once local/fresh and existing-PR launch paths package the relevant role/niche contracts, job and breadth remain independent, and offline verification covers the new boundaries. The previous baseline attempted 85 tests: 77 passed and eight temporary-directory cases encountered sandbox permissions; do not retry or bypass those locked paths.
+
+Integration: the user explicitly approved the project-local `.agents` changes and overrode the locked-directory stop rule for this task. Approved creation of the eight directories succeeded; resource writing resumed within disjoint ownership. The coordinator receives the complete trusted catalog so isolated contexts can make evidence-backed cross-domain handoffs; initial roles are selected by job and only relevant shared/role/niche instructions are sent to each worker. Natural-language jobs are interpreted by the coordinator rather than a keyword classifier.
+
+Completed: all eight role folders, 21 niche guides, and two shared/routing resources are present; old flat role files were removed after preserving and adapting their contracts. Fresh workspaces require no GitHub or Git history. Existing-PR commands retain their clean pinned-head preflight. Both launchers accept task and scope, and new-PR publication is separately authorized with `--publish`; the launcher never performs publication itself. Direct workspace prompt construction defaults to read-only audit authority. Codex fresh-directory launches include the no-Git-repository-check flag. UI metadata and documentation describe the same interface.
+
+Verification: 120 tests discovered; 112 runnable offline tests passed. The eight known temporary-directory fixture cases were not retried after sandbox permission failures, so this is not a full-suite pass. Syntax validation passed for all 16 Python files and `git diff --check` passed. The skill validator passed; all 31 resource paths exactly match the catalog; all 33 skill Markdown files and 64 local links resolve. Six actual prompt-packaging scenarios passed without model execution. A no-PR exhaustive-audit dry run against the actual dirty workspace also passed, including the source snapshot, all eight role contracts, and disabled publication authority, without starting an agent. An independent instruction-only forward test reviewed audit, focused UI, fresh build, explicit new-PR publication, and task-data/README attempts to grant publication; it found bounded plans consistent with authority and source context. These checks do not prove live models, subagent execution, GitHub authentication, or new-PR publication. No paid model session, new PR, Git history change, or GitHub mutation was performed.
+
+The sections below preserve historical blueprints and verification snapshots. Their older file paths, existing-PR-only boundaries, and test counts describe previous iterations; the completed workspace-first section above is the current architecture.
+
+## Production-team & cross-harness hardening blueprint and completion
+
+Harden the portable launcher, harness registry, coordinator skill, and eight specialist reference contracts so the PR team functions as a deterministic production engineering team across any agent harness while keeping the original `pr_team.py` and core `prteam/{cli,github,scope}.py` modules untouched.
+
+| Owned paths | Single responsibility and acceptance |
+| --- | --- |
+| prteam/harness.py | Enforce `Harness.__post_init__` invariants (non-empty `name`/`command`, no control characters, reserved `"auto"` rejection, strict boolean `verified`, no `{prompt}` in `args` when `prompt_delivery == "stdin"`), single-pass placeholder substitution in `render()`, `select("auto")` fallback returning a `Harness` instance for custom overrides, Windows outer-quote stripping and `ValueError` handling in `custom()`, and built-in entries for `agy`, `aider`, and `goose`. |
+| pr_team_any.py | Add `--config`, reject mutually exclusive `--harness` and `--harness-cmd`, and resolve the selected CLI executable via `require_command` before GitHub preflight so missing prerequisites fail early and Windows `.cmd`/`.exe` shims execute cleanly with `shell=False`. |
+| harnesses.example.json | Document override templates for all unverified built-in harnesses including `agy`, `aider`, and `goose`. |
+| .agents/skills/pr-team/SKILL.md | Define the 4-part harness portability & context-isolation matrix (including mandatory inlined role contracts for isolated subagent contexts and workspace-mode handling), `C0`/`C1`/`C2` candidate tracking, 9-field subagent dispatch contract, canonical finding deduplication (`F-01`, ...) and upfront cross-file contract alignment, standardized worker handoff records, and the 7-section final report contract. |
+| .agents/skills/pr-team/HARNESSES.md | Document the expanded 11-CLI registry, `--config`, `--harness`/`--harness-cmd` mutual exclusion, preflight `PATH` resolution, and subagent vs single-session capability execution. |
+| .agents/skills/pr-team/references/{sentinel,scalpel,harness,gatekeeper,bolt,palette,mason,scribe}.md | Align all eight specialist contracts on `C0`/`C1`/`C2` candidate tagging, provenance classification (`PR-regression`, `pre-existing-surgical-target`, `pre-existing-incidental`), self-contained subagent execution, red-to-green verification, and structured handoffs. |
+| tests/test_harness.py | Offline coverage for `Harness` invariant validation, single-pass rendering, custom auto-select fallback, Windows quote stripping, `pr_team_any.py` end-to-end launch contracts, and skill/reference link and contract integrity. |
+| README.md, ARCHITECTURE.md | Integration owner: synchronize documentation and architecture ledger with verified behavior. |
+
+Completed: three parallel specialist subagents executed within disjoint file boundaries, followed by coordinator integration and verification. `pr_team.py`, `prteam/cli.py`, `prteam/github.py`, `prteam/scope.py`, and the original test modules (`test_cli.py`, `test_github.py`, `test_scope.py`) remain untouched.
+
+Verification: all 85 offline unittest tests pass (`python -m unittest discover -s tests -v`), covering the original 47 tests plus 38 harness, portable-launcher, and skill-contract tests.
+
 ## Harness portability blueprint and completion
 
 Make the skill and the launcher usable from any agent harness, not only Codex. Keep the existing directory structure, eight specialist roles, three scope modes, launcher contract, and read-only GitHub boundary. The change is additive: the original launcher and package modules stay byte-identical, and portability is delivered by new files plus targeted edits to the skill and documentation.

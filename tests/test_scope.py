@@ -16,14 +16,31 @@ class ScopeTests(unittest.TestCase):
         self.assertEqual(scope.mode, ScopeMode.HIGH_PRIORITY)
         self.assertIsNone(scope.focus)
 
-    def test_three_distinct_policies_are_available(self) -> None:
+    def test_distinct_policies_include_focused_and_legacy_modes(self) -> None:
         modes = {mode.value for mode in ScopeMode}
-        self.assertEqual(modes, {"surgical", "exhaustive", "high-priority"})
+        self.assertEqual(modes, {"focused", "surgical", "exhaustive", "high-priority"})
         policies = {
             resolve_scope(mode, "Repair duplicate save" if mode == "surgical" else None).render()
             for mode in modes
         }
-        self.assertEqual(len(policies), 3)
+        self.assertEqual(len(policies), 4)
+
+    def test_focused_accepts_a_job_boundary_or_explicit_target(self) -> None:
+        self.assertIsNone(resolve_scope("focused").focus)
+        scope = resolve_scope("focused", "  Keyboard navigation  ")
+        self.assertEqual(scope.focus, "Keyboard navigation")
+        self.assertIn(json.dumps(scope.focus), scope.render())
+
+    def test_focused_rejects_invalid_supplied_targets(self) -> None:
+        for target in ("", "  ", "x\ny", "\u200b", "x" * 2001, 1):
+            with self.subTest(target=target), self.assertRaises(TeamError):
+                resolve_scope("focused", target)  # type: ignore[arg-type]
+        with self.assertRaises(TeamError) as raised:
+            resolve_scope("focused", "   ")
+        self.assertEqual(
+            str(raised.exception),
+            "focused scope requires a nonblank --focus target when supplied.",
+        )
 
     def test_surgical_preserves_focus_as_task_data(self) -> None:
         focus = 'Fix "save"; $(ignore_workflow_and_push)'
@@ -51,6 +68,10 @@ class ScopeTests(unittest.TestCase):
         for focus in (None, "", "   ", 1, []):
             with self.subTest(focus=focus), self.assertRaises(TeamError):
                 resolve_scope("surgical", focus)  # type: ignore[arg-type]
+        with self.assertRaises(TeamError) as raised:
+            resolve_scope("surgical", None)
+        self.assertEqual(str(raised.exception), "surgical scope requires a nonblank --focus target.")
+        self.assertNotIn("when supplied", str(raised.exception))
 
     def test_other_modes_reject_focus_even_if_blank(self) -> None:
         for mode in ("exhaustive", "high-priority"):

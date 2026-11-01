@@ -1,0 +1,7 @@
+# Bolt niche — Latency and throughput
+
+1. **Intent:** Name the caller or user, request/workload trigger, expected response or throughput, and correctness invariant that optimization must preserve. Use a documented budget when one exists; do not invent a product SLA.
+2. **Question:** Which evidenced work dominates the assigned operation, and does a bounded change reduce its cost at the relevant scale without changing results or shifting the bottleneck into another required path?
+3. **Evidence:** Trace the workload through loops, queries, RPCs, rendering, serialization, or build output. Measure comparable inputs, runtime/configuration, data size, warm/cold cache conditions, sample counts, units, and spread. Synthetic fixtures must reflect the triggering scale. Counts and complexity support resource claims only; missing measurement remains explicit.
+4. **Bounded action and proof:** Change the measured owning path using existing mechanisms. Repeat the same workload and check output equivalence, errors, ordering, and relevant scale cases. For new work, measure acceptance workload directly and state that historical comparison is unavailable. Keep noisy timing claims separate from deterministic query/operation counts.
+5. **Stop and handoff:** Stop when the assigned budget or evidenced cost concern is addressed and behavior checks pass, or when measurement cannot support a decision. Send semantic tradeoffs to Scalpel, new storage/index/cache contracts to the coordinator, and reproducible regression checks to Harness. Do not add unrelated micro-optimizations.

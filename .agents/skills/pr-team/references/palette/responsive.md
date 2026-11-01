@@ -1,0 +1,7 @@
+# Palette niche — Responsive behavior
+
+1. **Intent:** Identify the actor and task at a relevant viewport, zoom, input modality, or content size. Preserve the invariant that required information and actions remain discoverable, readable, and operable.
+2. **Question:** Does the assigned flow still work when space shrinks, text expands, or content grows, without hidden controls, overlap, clipping, or inappropriate scrolling?
+3. **Evidence:** Inspect the actual component layout, overflow, wrapping, breakpoints, sticky overlays, and meaningful reading order. Use representative long labels, empty/full lists, validation text, and navigation states where relevant. Record executed viewport/zoom settings and observations; a CSS trace is not a rendered check.
+4. **Bounded action and proof:** Use existing layout primitives and responsive tokens to fix the owning constraint. Preserve content hierarchy and keyboard/semantic order. Check the failing condition and nearby supported sizes, plus the normal layout, with required controls reachable and meaningful content intact.
+5. **Stop and handoff:** Stop when the named task survives the assigned layout conditions. Send information-architecture or design-system choices to the coordinator and rendering/resource concerns to Bolt. Do not turn a task-specific layout repair into an arbitrary visual redesign or claim device coverage that was not exercised.

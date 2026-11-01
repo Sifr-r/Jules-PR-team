@@ -1,0 +1,7 @@
+# Mason niche — Responsibility boundaries
+
+1. **Intent:** Name the caller or maintainer, change that exposes the boundary, intended owner of the rule/state, and invariant that each responsibility has one coherent source of truth.
+2. **Question:** Does the assigned structure force unrelated consumers to know internal details or keep competing implementations synchronized? For new work, which existing owner can absorb the behavior without creating a parallel policy?
+3. **Evidence:** Trace imports, call sites, state access, duplicate rule changes, and error/type contracts at concrete locations. State the actual change hazard or intended new interface. Folder names and file size do not prove cohesion, and similarity alone does not justify merging responsibilities.
+4. **Bounded action and proof:** Reuse the established owner or propose the smallest justified module with one responsibility and explicit inputs/outputs. Agree cross-file signatures and errors before parallel edits. Update owned callers and prove the requested behavior, including failure paths; existing refactors also require the behavior-preservation niche.
+5. **Stop and handoff:** Stop when the named responsibility and caller contract are clear and demonstrated. Hand broader architecture or public API choices to the coordinator, semantics to Scalpel, and missing coverage to Harness. Do not restructure adjacent modules or add a generic framework for hypothetical reuse.

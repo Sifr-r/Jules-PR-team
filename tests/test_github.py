@@ -11,7 +11,7 @@ from typing import Any
 import unittest
 from unittest.mock import patch
 
-from prteam.github import TeamError, parse_pr_url, read_pr, validate_checkout
+from prteam.github import TeamError, _read_command, parse_pr_url, read_pr, validate_checkout
 
 
 PR_URL = "https://github.com/acme/widget/pull/123"
@@ -185,6 +185,40 @@ class CheckoutTests(unittest.TestCase):
         with patch("prteam.github._read_command", side_effect=[identity, TeamError("Checking working tree failed")]):
             with self.assertRaisesRegex(TeamError, "Checking working tree failed"):
                 validate_checkout(self.repo, metadata())
+
+    def test_git_commands_set_optional_locks_and_strip_git_env_overrides(self) -> None:
+        result = subprocess.CompletedProcess([], 0, stdout="", stderr="")
+        env_overrides = {
+            "GIT_DIR": "/tmp/other-git",
+            "GIT_WORK_TREE": "/tmp/other-tree",
+            "GIT_INDEX_FILE": "/tmp/other-index",
+            "PR_TEAM_TEST_SENTINEL": "kept",
+        }
+        with (
+            patch.dict(os.environ, env_overrides),
+            patch("prteam.github.shutil.which", return_value="git.exe"),
+            patch("prteam.github.subprocess.run", return_value=result) as run,
+        ):
+            _read_command(["git", "status", "--porcelain"], self.repo, "Checking working tree")
+            environment = run.call_args.kwargs["env"]
+            self.assertEqual(environment["GIT_OPTIONAL_LOCKS"], "0")
+            self.assertNotIn("GIT_DIR", environment)
+            self.assertNotIn("GIT_WORK_TREE", environment)
+            self.assertNotIn("GIT_INDEX_FILE", environment)
+            self.assertEqual(environment["PR_TEAM_TEST_SENTINEL"], "kept")
+
+    def test_read_pr_and_validate_checkout_reject_invalid_types_and_oserror(self) -> None:
+        with patch("prteam.github._read_command") as read:
+            with self.assertRaises(TeamError):
+                read_pr(PR_URL, "not-a-path")  # type: ignore[arg-type]
+            with self.assertRaises(TeamError):
+                validate_checkout("not-a-path", metadata())  # type: ignore[arg-type]
+            with self.assertRaises(TeamError):
+                validate_checkout(self.repo, None)  # type: ignore[arg-type]
+            with patch.object(Path, "is_dir", side_effect=PermissionError("locked")):
+                with self.assertRaises(TeamError):
+                    validate_checkout(self.repo, metadata())
+        read.assert_not_called()
 
 
 if __name__ == "__main__":

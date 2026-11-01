@@ -1,6 +1,6 @@
 # Contributor instructions
 
-This project turns the Jules PR prompt library into an agent workflow for one existing PR. Read `ARCHITECTURE.md` before changing runtime boundaries. `upstream/` preserves the original source. The retained root `GOVERNANCE.md` and `agents/`, alongside `upstream/`, are legacy Jules reference material; their PR-creation instructions do not apply to this agent workflow.
+This project adapts the Jules prompt library into a workspace-first agent team for audits, focused changes, fresh builds, and optional existing-PR review. Read `ARCHITECTURE.md` before changing runtime boundaries. `upstream/` preserves the original source. The retained root `GOVERNANCE.md` and `agents/`, alongside `upstream/`, are legacy Jules reference material; their PR-creation instructions do not apply to this agent workflow. The shipped skill supports explicitly authorized new-PR publication by its launched coordinator; implementing or testing this toolkit never publishes.
 
 ## Safety
 
@@ -12,7 +12,7 @@ This project turns the Jules PR prompt library into an agent workflow for one ex
 
 ## Responsibilities and validation
 
-`prteam/github.py` owns remote context and checkout validation; `prteam/cli.py` owns invocation; `prteam/harness.py` owns the agent CLI registry and its user overrides. The reusable workflow and individual responsibilities live in `.agents/skills/pr-team/`. New files must have one responsibility documented in `ARCHITECTURE.md`.
+`prteam/github.py` owns existing-PR context and checkout validation; `prteam/workspace.py` owns local/fresh snapshots; `prteam/cli.py` owns invocation; `prteam/harness.py` owns the agent CLI registry and overrides; `prteam/routing.py` owns task validation and initial role plans; `prteam/prompts.py` owns confined resource packaging. The reusable workflow, shared contracts, role folders, and niche guides live in `.agents/skills/pr-team/`. New files must have one responsibility documented in `ARCHITECTURE.md`.
 
 Run `python -m unittest discover -s tests -v`. Tests must remain offline: mock external commands, never start a paid Codex session, never post to GitHub, and never alter a real PR checkout. Preserve strict typing for new Python code and test meaningful behavior rather than exact prose.
 

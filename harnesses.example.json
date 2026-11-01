@@ -41,6 +41,24 @@
       "args": ["-x"],
       "prompt_delivery": "stdin",
       "note": "Amp CLI."
+    },
+    "agy": {
+      "command": "agy",
+      "args": ["-p"],
+      "prompt_delivery": "stdin",
+      "note": "Antigravity CLI. Confirm the flags with --dry-run."
+    },
+    "aider": {
+      "command": "aider",
+      "args": ["--yes-always", "--no-auto-commits"],
+      "prompt_delivery": "stdin",
+      "note": "Aider CLI with auto-commits disabled. Confirm the flags with --dry-run."
+    },
+    "goose": {
+      "command": "goose",
+      "args": ["run", "-i", "-"],
+      "prompt_delivery": "stdin",
+      "note": "Goose CLI reading instructions from stdin. Confirm the flags with --dry-run."
     }
   }
 }

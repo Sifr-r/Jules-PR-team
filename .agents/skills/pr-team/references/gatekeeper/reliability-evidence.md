@@ -1,0 +1,11 @@
+# User-facing reliability and release evidence
+
+**Intent:** Assess whether evidence supports the reliability claims relevant to the requested change. Activate for a changed critical user journey, an existing service objective, or a requested release-readiness assessment; a local build does not automatically need production SLOs or a canary system.
+
+**Questions, top down:** Which user outcome must remain available, correct or timely? Which existing indicator measures that outcome, for which population and interval? Is its target an agreed requirement or a proposal? If staged release is relevant, what exposure, evaluation window and comparable control identify candidate-specific harm? What condition stops progression, who responds, and what recovery remains possible after data/configuration changes?
+
+**Evidence:** Inspect available acceptance tests, recorded telemetry, objectives and release/runbook definitions without deploying or initiating production tests. Match numerator/denominator, latency distribution, sampling and failure scope to the stated journey. Distinguish a proposed metric from measured compliance and a plan from an executed release. Candidate/control measurements need attribution: a time-shifted comparison or unrelated host load can mislead. Avoid interpreting aggregate success as proof that the changed population is healthy.
+
+**Bounded assessment:** Remain read-only. Name the smallest relevant evidence gap, concrete consequence and owner. Reuse established objectives, budgets and release checks; do not invent numerical thresholds, require new monitoring integrations or add deployment infrastructure. Review explicit abort/recovery criteria when the job affects them. Missing production data limits production claims but does not negate valid local acceptance evidence; absent attestation/SLO machinery is not itself an incident or universal gate.
+
+**Stop/handoff:** End with a scoped reliability conclusion, observed versus unverified claims and exact next actions. Hand workload/measurement questions to Bolt, recovery correctness to Scalpel and runbook clarity to Scribe. Keep publication/deployment authority separate from readiness and leave remote actions to the authorized coordinator.

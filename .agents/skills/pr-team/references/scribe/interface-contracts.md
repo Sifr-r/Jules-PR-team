@@ -1,0 +1,7 @@
+# Scribe niche — Interface contracts
+
+1. **Intent:** Identify the reader/caller, command or API/configuration trigger, expected result, and invariant that documentation matches the implemented contract.
+2. **Question:** Can that reader choose valid inputs and interpret outputs, defaults, errors, and compatibility constraints without relying on undocumented behavior or a claim contradicted by source?
+3. **Evidence:** Pair each relevant flag, symbol, configuration key, default, output shape, and failure mode with exact source/tests/configuration locations. Inspect consumers and generated/help output where safely available. Separate agreed future behavior from implemented behavior and source-verified examples from executed commands.
+4. **Bounded action and proof:** Correct the owning description or write the requested new contract in the established location. Align examples with actual parsing and output, verify names/links, and run relevant safe help/doc checks when available. If the implementation is wrong, hand it to its owner rather than changing executable behavior through a documentation task.
+5. **Stop and handoff:** Stop when the assigned interface's material claims have source traces and evidence limits are explicit. Send ambiguous public contract choices to the coordinator, correctness mismatches to Scalpel, sensitive output claims to Sentinel, and executable example gaps to Harness. Avoid speculative completeness across unrelated interfaces.

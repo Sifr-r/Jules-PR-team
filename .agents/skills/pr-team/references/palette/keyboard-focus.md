@@ -1,0 +1,7 @@
+# Palette niche — Keyboard and focus
+
+1. **Intent:** Identify the keyboard user, initiating control, expected destination, and invariant that every required action remains reachable with a visible, meaningful focus position.
+2. **Question:** Can the user complete this flow without a pointer, unexpected focus loss, or a trap? Does closing, cancelling, failing, or completing a transient view put focus somewhere sensible?
+3. **Evidence:** Trace tab order and component state through opening, closing, async updates, validation errors, and item removal. Inspect native controls, `tabindex`, focus calls, disabled states, dialog containment, and restoration targets. Record actual key sequences and focus targets for executed checks; source inspection alone does not prove browser behavior.
+4. **Bounded action and proof:** Prefer native keyboard behavior and the project's existing dialog/composite-widget primitives. Repair only the owning focus or event transition. Verify forward/backward navigation, activation, relevant escape/cancel behavior, visible focus, and restoration without double handling or stealing focus during background updates.
+5. **Stop and handoff:** Stop when the assigned path and relevant transitions preserve keyboard reachability and focus. Send state races or stale-element timing to Scalpel and executable interaction coverage to Harness. Report unavailable browser or assistive-technology checks explicitly; do not claim full keyboard coverage from a static trace.

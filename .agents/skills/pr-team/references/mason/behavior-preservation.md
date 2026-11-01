@@ -1,0 +1,7 @@
+# Mason niche — Behavior preservation
+
+1. **Intent:** Identify the consumer, invocation trigger, expected observable results, and invariants to preserve while the assigned implementation moves or consolidates.
+2. **Question:** Can the structure change without altering outputs, exports, side effects, evaluation order, errors, state transitions, or supported types for affected callers?
+3. **Evidence:** Enumerate relevant callers and existing checks; capture pre-edit behavior and known failures before moving logic. Cover observable contracts rather than asserting the new file layout. If crucial paths lack proof, request focused behavioral coverage from Harness before the refactor.
+4. **Bounded action and proof:** Make the smallest structural transition, then run the same meaningful checks on the integrated candidate. Inspect imports, default values, initialization order, cleanup, and exceptions that extraction can change. Record baseline failures distinctly and assess actual output/side-effect equivalence; updated snapshots alone are insufficient.
+5. **Stop and handoff:** Stop when the assigned invariants have matching before/after evidence or an explicit unresolved gap. Route intentional behavior changes to Scalpel and the coordinator as requested-change work rather than hiding them in cleanup. Do not certify untested caller behavior or expand the refactor to make validation convenient.

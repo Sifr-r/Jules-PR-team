@@ -24,6 +24,14 @@ _PR_FIELDS = (
     "url,number,title,body,state,isDraft,headRefOid,headRefName,"
     "baseRefName,baseRefOid,files,statusCheckRollup"
 )
+_GIT_ENV_OVERRIDES = (
+    "GIT_DIR",
+    "GIT_WORK_TREE",
+    "GIT_INDEX_FILE",
+    "GIT_OBJECT_DIRECTORY",
+    "GIT_ALTERNATE_OBJECT_DIRECTORIES",
+    "GIT_COMMON_DIR",
+)
 
 
 def parse_pr_url(value: str) -> tuple[str, str, int]:
@@ -52,6 +60,10 @@ def _read_command(args: list[str], repo: Path, context: str) -> str:
     if args[0] == "gh":
         # gh otherwise lets GH_REPO replace the repository selected by cwd.
         environment.pop("GH_REPO", None)
+    elif args[0] == "git":
+        environment["GIT_OPTIONAL_LOCKS"] = "0"
+        for var in _GIT_ENV_OVERRIDES:
+            environment.pop(var, None)
     try:
         result = subprocess.run(
             [executable, *args[1:]],
@@ -71,10 +83,15 @@ def _read_command(args: list[str], repo: Path, context: str) -> str:
         raise TeamError(f"Could not start command for {context}.") from exc
     if result.returncode != 0:
         # Subprocess diagnostics may contain credentials or repository content.
+        if args[0] == "gh":
+            raise TeamError(
+                f"{context} failed (exit {result.returncode}). "
+                "Check local Git setup and repository access; for GitHub authentication, "
+                "run gh auth login -h github.com."
+            )
         raise TeamError(
             f"{context} failed (exit {result.returncode}). "
-            "Check local Git setup and repository access; for GitHub authentication, "
-            "run gh auth login -h github.com."
+            "Check local Git setup and repository access."
         )
     return result.stdout
 
@@ -93,6 +110,8 @@ def _read_object(args: list[str], repo: Path, context: str) -> dict[str, Any]:
 def read_pr(pr_url: str, repo: Path) -> dict[str, Any]:
     """Fetch and validate the snapshot used by the coordinator."""
     owner, name, number = parse_pr_url(pr_url)
+    if not isinstance(repo, Path):
+        raise TeamError("Local checkout must be a directory path.")
     data = _read_object(
         ["gh", "pr", "view", pr_url, "--json", _PR_FIELDS], repo, "Reading PR"
     )
@@ -133,10 +152,17 @@ def read_pr(pr_url: str, repo: Path) -> dict[str, Any]:
 
 def validate_checkout(repo: Path, pr: dict[str, Any]) -> None:
     """Refuse dirty, unrelated, or stale working copies without changing them."""
-    if not repo.is_dir():
-        raise TeamError(f"Local checkout directory does not exist: {repo}")
-    if not (repo / ".git").exists():
-        raise TeamError("--repo must name the checkout root containing .git, not a subdirectory.")
+    if not isinstance(repo, Path):
+        raise TeamError("Local checkout must be a directory path.")
+    if not isinstance(pr, dict):
+        raise TeamError("PR metadata must be a JSON object.")
+    try:
+        if not repo.is_dir():
+            raise TeamError(f"Local checkout directory does not exist: {repo}")
+        if not (repo / ".git").exists():
+            raise TeamError("--repo must name the checkout root containing .git, not a subdirectory.")
+    except (OSError, RuntimeError) as exc:
+        raise TeamError("Could not inspect the local checkout directory.") from exc
     owner, name, _ = parse_pr_url(pr.get("url", ""))
     head = pr.get("headRefOid")
     if not isinstance(head, str) or _SHA.fullmatch(head) is None:

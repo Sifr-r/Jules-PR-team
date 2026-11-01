@@ -1,0 +1,7 @@
+# Bolt niche — Resource lifecycle
+
+1. **Intent:** Name the resource consumer, acquisition trigger, intended completion, and invariant for ownership, bounded usage, and eventual release across success, error, cancellation, and retry.
+2. **Question:** Can the assigned operation retain, duplicate, leak, or exhaust a resource after its owner is done, or grow usage with input/repetition beyond the intended bound?
+3. **Evidence:** Trace file/socket handles, subscriptions, timers, tasks, buffers, allocations, caches, or pooled objects from acquisition through every relevant exit. Use deterministic lifecycle counts, repeated synthetic workloads, or measured retention where available. Separate high peak demand from unreleased growth and static suspicion from executed evidence.
+4. **Bounded action and proof:** Restore clear ownership and cleanup using existing lifecycle primitives; preserve error propagation and cancellation semantics. Check normal completion plus the concrete error/cancel/retry path and repeated operation. New implementations prove bounded ownership directly; existing repairs compare to the observed baseline without altering user-owned state.
+5. **Stop and handoff:** Stop when the assigned resource has an evidenced bound and release contract. Send race/cancellation semantics to Scalpel, isolation or sensitive-data retention to Sentinel, and stress/lifecycle fixtures to Harness. Route capacity policy or new caching infrastructure to the coordinator rather than inventing it locally.

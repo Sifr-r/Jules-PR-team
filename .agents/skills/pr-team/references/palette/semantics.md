@@ -1,0 +1,7 @@
+# Palette niche — Semantics
+
+1. **Intent:** Identify the assistive-technology user, the control or content they encounter, the outcome they need, and the invariant that purpose, relationships, and state are programmatically conveyed.
+2. **Question:** Does the accessibility tree express the same actionable meaning as the visible interface, including names, roles, labels, grouping, and changing state?
+3. **Evidence:** Inspect DOM structure and existing semantic primitives for headings, landmarks, controls, labels, descriptions, tables, and status relationships relevant to this flow. Check duplicate IDs, broken references, inaccessible icon-only controls, and conflicting native/ARIA state. Trace a concrete failed interpretation or action; avoid generic compliance claims.
+4. **Bounded action and proof:** Use native HTML and established components before adding ARIA. Correct the smallest missing or conflicting relationship and keep visible and accessible names aligned with intent. Inspect the resulting tree or run relevant semantic/component checks; record any real screen-reader interaction separately.
+5. **Stop and handoff:** Stop when assigned content and state changes communicate the required meaning. Send keyboard interaction behavior to the keyboard/focus niche and announcement/recovery behavior to forms/feedback. State missing manual evidence rather than equating an automated scan with complete accessibility compliance.

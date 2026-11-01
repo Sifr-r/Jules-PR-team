@@ -1,0 +1,7 @@
+# Palette niche — Intent and flow
+
+1. **Intent:** Identify the actor, the event that starts the task, the outcome they seek, and what must remain true throughout it. Include novice/repeat use and permission constraints only when they affect this job.
+2. **Question:** Can that actor discover, enter, complete, and recover from the assigned flow without an unexplained state or loss of their work? What observable event counts as completion?
+3. **Evidence:** Map the entry point, required inputs, transitions, success state, and relevant empty/loading/error/cancel states to routes, components, handlers, and tests. Inspect copy and existing conventions before asking the human about intent. Record evidence separately from assumptions; an audit supplies failures or opportunities, not permission to implement them.
+4. **Bounded action and proof:** For an authorized change, define acceptance as a short actor/trigger/outcome scenario and alter the smallest owning flow. Verify the main path and the relevant recovery path, preserving entered data and navigation expectations. For fresh UI, prove the requested scenario directly; there need not be a pre-existing defect.
+5. **Stop and handoff:** Stop when the named job has a coherent, evidenced completion path and assigned checks are recorded. Hand unresolved product choices to the coordinator, state-machine problems to Scalpel, and flow regression gaps to Harness. Do not redesign adjacent journeys simply because they share a component.

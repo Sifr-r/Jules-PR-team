@@ -1,0 +1,7 @@
+# Scribe niche — Setup guides
+
+1. **Intent:** Name the target reader and starting environment, setup/migration trigger, intended working state, and invariants around prerequisites, preserved data, and recoverable failure.
+2. **Question:** Can the reader follow the assigned path from that starting state, recognize success, and understand the relevant failure/retry path without hidden dependencies or unsafe assumptions?
+3. **Evidence:** Trace required tools, versions, environment/configuration keys, authentication, paths, ordering, and migration behavior to source and authoritative project configuration. Inspect every example for local/external effects before execution. Record which prerequisites and platforms were actually exercised and which steps are source-verified only.
+4. **Bounded action and proof:** Write or repair the smallest complete sequence for the requested starting state, using portable examples and non-secret placeholders. Verify links and commands through safe available checks; include supported failure diagnostics or recovery only when evidence establishes them. External mutation, credentials, and irreversible migration need coordinator handling rather than casual example execution.
+5. **Stop and handoff:** Stop when the assigned path explains its starting conditions, supported steps, observable completion, and unverified assumptions. Send missing setup behavior to Scalpel, secret handling to Sentinel, and isolated smoke-check needs to Harness. Never present an unrun installation, deployment, or migration as successful.

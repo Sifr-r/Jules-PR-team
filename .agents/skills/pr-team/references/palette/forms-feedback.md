@@ -1,0 +1,7 @@
+# Palette niche — Forms and feedback
+
+1. **Intent:** Identify the actor submitting or changing data, their trigger, the intended saved outcome, and invariants around data preservation, clear status, and recoverable failure.
+2. **Question:** Can the user tell what input is required, whether work is in progress, what succeeded or failed, and how to recover without losing valid input or accidentally repeating an action?
+3. **Evidence:** Trace labels, descriptions, validation timing, field/error associations, submission handlers, async status, disabled controls, success feedback, and retry behavior. Include empty, invalid, pending, failed, and completed states relevant to the job. Distinguish visual status, programmatic announcements, and persisted server state.
+4. **Bounded action and proof:** Keep errors specific and associated with their controls; retain useful input and provide an actionable recovery path. Use established status/live-region patterns without announcing every render. Verify the assigned success and failure scenarios, keyboard operation, feedback timing, and valid re-enablement; have Scalpel own persistence or duplicate-write logic.
+5. **Stop and handoff:** Stop when the user can recognize and recover from each assigned state. Hand backend/error-contract changes to the coordinator, async correctness to Scalpel, sensitive error content to Sentinel, and interaction tests to Harness. A helpful message cannot substitute for a successful operation.
